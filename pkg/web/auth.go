@@ -20,6 +20,10 @@ type Config struct {
 	AppName   string
 }
 
+type ContextKey string
+
+const contextKeyUser ContextKey = "user"
+
 // WithAuth is a middleware that checks if the request is authorized.
 //   - If the request is not authorized, it returns a 401 Unauthorized response.
 //   - If the request is authorized, it calls the next handler.
@@ -27,33 +31,25 @@ func WithAuth(h http.Handler, config Config) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 
-			var user string
-			authenticated := false
-
 			if len(config.ApiKey.Value()) > 0 && checkApiKey(r, config.ApiKey) {
-				authenticated = true
-				user = "apikey"
-			}
-
-			if !authenticated && len(config.JwtSecret.Value()) > 0 && len(config.JwtID) > 0 {
-				if claims, ok := checkJwtToken(r, config); ok {
-					authenticated = true
-					user = claims.User
-				}
-			}
-
-			if !authenticated {
-				Encode(w, http.StatusUnauthorized, NewApiError(ErrUnauthorized))
+				// update authenticated user in context and pass it to the next handler
+				ctx := context.WithValue(r.Context(), contextKeyUser, "apikey")
+				h.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
-			// Store authenticated user in context
-			ctx := context.WithValue(r.Context(), "user", user)
+			if len(config.JwtSecret.Value()) > 0 && len(config.JwtID) > 0 {
+				if claims, ok := checkJwtToken(r, config); ok {
+					// update authenticated user in context and pass it to the next handler
+					ctx := context.WithValue(r.Context(), contextKeyUser, claims.User)
+					h.ServeHTTP(w, r.WithContext(ctx))
+					return
+				}
+			}
 
-			// Pass modified request with updated context
-			h.ServeHTTP(w, r.WithContext(ctx))
-		},
-	)
+			// If neither API Key nor JWT is valid, return Unauthorized
+			Encode(w, http.StatusUnauthorized, NewApiError(ErrUnauthorized))
+		})
 }
 
 // checkApiKey checks if the request contains a valid API key.

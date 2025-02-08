@@ -8,12 +8,12 @@ type EncryptedString struct {
 }
 
 // NewEncryptedString creates a new EncryptedString by encrypting the supplied plainTextValue.
-func NewEncryptedString(plainTextValue string) EncryptedString {
+func NewEncryptedString(plainTextValue string) *EncryptedString {
 	s := EncryptedString{
 		value: plainTextValue,
 	}
 	s.encrypt()
-	return s
+	return &s
 }
 
 // NewDecryptedString decrypts an encrypted string
@@ -30,7 +30,7 @@ func (v *EncryptedString) encrypt() {
 	v.value = c.GetCypherBase64()
 }
 
-func (v EncryptedString) decrypt() string {
+func (v *EncryptedString) decrypt() string {
 	c := NewSymmetricEncryption()
 	c.SetCypherBase64(v.value)
 	// ignore errors
@@ -39,21 +39,21 @@ func (v EncryptedString) decrypt() string {
 }
 
 // Value returns the decrypted plainTextValue.
-func (v EncryptedString) Value() string {
+func (v *EncryptedString) Value() string {
 	return v.decrypt()
 }
 
 // Value returns the decrypted plainTextValue.
-func (v EncryptedString) String() string {
+func (v *EncryptedString) String() string {
 	return v.decrypt()
 }
 
 // EncryptedValue returns the encrypted value.
-func (v EncryptedString) EncryptedValue() string {
+func (v *EncryptedString) EncryptedValue() string {
 	return v.value
 }
 
-func (v EncryptedString) MarshalText() ([]byte, error) {
+func (v *EncryptedString) MarshalText() ([]byte, error) {
 	return []byte(v.value), nil
 }
 
@@ -62,7 +62,7 @@ func (v *EncryptedString) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (v EncryptedString) MarshalBinary() ([]byte, error) {
+func (v *EncryptedString) MarshalBinary() ([]byte, error) {
 	return []byte(v.value), nil
 }
 

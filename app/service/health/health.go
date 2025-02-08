@@ -21,7 +21,7 @@ type Model = struct {
 
 func Health(version string) Model {
 	bToMb := func(b uint64) float64 {
-		return float64(b) / (1024 / 1024)
+		return float64(b) / (1024 * 1024)
 	}
 	host, err := os.Hostname()
 	if err != nil {

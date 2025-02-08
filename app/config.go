@@ -118,7 +118,7 @@ func NewConfig() *Config {
 		LogLevel:       DefaultLogLevel,
 		LogDestination: DefaultLogDestination,
 
-		JwtSecret: crypt.NewEncryptedString(DefaultJwtSecret),
+		JwtSecret: *crypt.NewEncryptedString(DefaultJwtSecret),
 		JwtID:     DefaultJwtID,
 
 		Webserver: WebserverConfig{
@@ -127,7 +127,7 @@ func NewConfig() *Config {
 			MinTLS:       DefaultMinTLS,
 			CertFile:     filepath.Join(AppDir, "etc", DefaultCertFile),
 			KeyFile:      filepath.Join(AppDir, "etc", DefaultKeyFile),
-			CertPassword: crypt.NewEncryptedString(""),
+			CertPassword: *crypt.NewEncryptedString(""),
 			BlockedIPs:   []string{},
 			AllowedIPs:   []string{},
 		},
