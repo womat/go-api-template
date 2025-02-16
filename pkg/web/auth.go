@@ -20,6 +20,7 @@ type Config struct {
 	AppName   string
 }
 
+// ContextKey is used for storing values in context safely
 type ContextKey string
 
 const contextKeyUser ContextKey = "user"

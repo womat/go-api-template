@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"github.com/womat/go-api-template/app"
@@ -13,19 +14,22 @@ import (
 	"runtime"
 )
 
+//go:embed README.md
+var Readme string
+
 func main() {
 	// Parse command line flags.
 	flags := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.SetOutput(os.Stdout)
 
-	about := flags.Bool("about", false, "print app about details and exit")
-	cryptString := flags.String("crypt", "", "encrypt the given string and exit")
-	help := flags.Bool("help", false, "print a help message and exit")
-	version := flags.Bool("version", false, "print app version and exit")
+	about := flags.Bool("about", false, "Print app details and exit")
+	cryptString := flags.String("crypt", "", "Encrypt the given string and exit")
+	help := flags.Bool("help", false, "Print a help message and exit")
+	version := flags.Bool("version", false, "Print the app version and exit")
 
-	trace := flags.Bool("trace", false, "same as --debug but with added source code location in log messages")
-	debug := flags.Bool("debug", false, "enable debug information")
-	configFile := flags.String("config", app.DefaultConfigFile, "config file")
+	logLevel := flags.String("logLevel", "", "Set the log level (overrides the config file). Supported values: trace | debug | info | warning | error")
+	logDestination := flags.String("logDestination", "", "Set the log destination (overrides the config file). Supported values: stdout | stderr | null | /path/to/logfile")
+	configFile := flags.String("config", app.DefaultConfigFile, "Specify the path to the config file")
 
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
@@ -38,61 +42,59 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Encrypt the given string and exit when crypt flag is used.
-	if *cryptString != "" {
+	switch {
+	case *about:
+		printAbout()
+		os.Exit(0)
+	case *cryptString != "":
 		fmt.Println(crypt.NewEncryptedString(*cryptString).EncryptedValue())
 		os.Exit(0)
-	}
-
-	if *version {
+	case *version:
 		fmt.Println(app.VERSION)
 		os.Exit(0)
-	}
-
-	if *help {
-		fmt.Println(app.Readme)
+	case *help:
+		fmt.Println(Readme)
 		os.Exit(0)
 	}
 
-	config, err := loadConfig(*configFile, *debug, *trace)
+	var logger *xlog.LoggerWrapper
+
+	config, err := loadConfig(*configFile, *logLevel, *logDestination)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "Failed to load config file %s: %s\n", *configFile, err.Error())
 		os.Exit(1)
 	}
 
-	slog.Debug("Configuration loaded", "config", config)
 	for {
 		// run the app in a function to be able to restart it and reload the config
 		// possible open log files are always closed before the function exits
 		func() {
-			var logger *xlog.LoggerWrapper
-
 			if logger, err = xlog.Init(config.LogDestination, config.LogLevel); err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "Error initializing logger: %s\n", err.Error())
+				fmt.Printf("Failed to initialize logger: %s\n", err.Error())
 				os.Exit(1)
 			}
-			defer xlog.Close(logger)
+			defer logger.Close()
 
 			// set slog logger as default logger
 			slog.SetDefault(logger.Logger)
 			slog.Info("Logging initialized", "logLevel", config.LogLevel)
 			slog.Debug("Starting with configuration", "config", config)
 
-			a := app.New(config, filepath.Join("/opt", app.MODULE))
-			err = a.Run()
+			a, err := app.New(config, filepath.Join("/opt", app.MODULE)).Run()
 			if err != nil {
-				_, _ = fmt.Fprintf(os.Stderr, "runtime error: %s\n", err.Error())
+				slog.Error("Critical error occurred, shutting down", "error", err)
 				os.Exit(1)
 			}
 
 			select {
 			case <-a.Restart():
 				slog.Info("Reload configuration", "configFile", *configFile)
-				if config, err = loadConfig(*configFile, *debug, *trace); err != nil {
-					_, _ = fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+				if config, err = loadConfig(*configFile, *logLevel, *logDestination); err != nil {
+					slog.Error("Failed to reload config file, shutting down",
+						"configFile", *configFile,
+						"error", err)
 					os.Exit(1)
 				}
-				slog.Debug("Configuration reloaded", "config", config)
 
 			case <-a.Shutdown():
 				os.Exit(0)
@@ -134,28 +136,24 @@ func printAbout() {
 }
 
 // loadConfig loads the configuration from the given file.
-func loadConfig(configFile string, debug, trace bool) (*app.Config, error) {
-	var config *app.Config
+func loadConfig(configFile, logLevel, logDestination string) (*app.Config, error) {
 
-	configFile = filepath.ToSlash(configFile)
-	fileInfo, err := os.Stat(configFile)
-
-	if err != nil || fileInfo.IsDir() {
-		return config, fmt.Errorf("invalid or missing file %s", configFile)
+	config, err := app.NewConfig().LoadConfig(configFile)
+	if err != nil {
+		return nil, err
 	}
 
-	if config, err = app.NewConfig().LoadConfig(configFile); err != nil {
-		return config, err
+	switch logLevel {
+	case "": // if no log level is provided, use the one from the config
+	case "debug", "trace", "info", "warning", "error", "err", "warn":
+		config.LogLevel = logLevel
+	default:
+		return nil, fmt.Errorf("invalid log level: %s", logLevel)
 	}
 
-	// add stdout to log destinations if debug or trace is set
-	if debug || trace {
-		config.LogDestination = "stdout"
-		config.LogLevel = "debug"
-
-		if trace {
-			config.LogLevel = "trace"
-		}
+	// Set log destination if provided
+	if logDestination != "" {
+		config.LogDestination = logDestination
 	}
 
 	return config, nil

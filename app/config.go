@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/womat/go-api-template/pkg/crypt"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -21,9 +22,6 @@ const (
 	DefaultCertFile       = "cert.pem"
 	DefaultJwtSecret      = ""
 	DefaultJwtID          = ""
-
-	// DefaultAppKey is the default api key for the application (app_name --crypt secure_api_key)
-	DefaultAppKey = "iIHj841o6kj1EaCfJqUVNss1oei6EIIiE+TJaF9TwNbD9rwJOmCHxYcx"
 )
 
 var (
@@ -94,7 +92,7 @@ type WebserverConfig struct {
 
 	// CertPassword is an optional certificate password that
 	// CertPassword must be encrypted with "app --crypt <plaintext>"
-	// Default is empty which means no password is used.
+	// Default is empty, which means no password is used.
 	CertPassword crypt.EncryptedString `yaml:"certPassword"`
 
 	// BlockedIPs is a list of IP addresses or networks that are forbidden from accessing the application.
@@ -112,6 +110,15 @@ type WebserverConfig struct {
 	AllowedIPs []string `yaml:"allowedIPs"`
 }
 
+// MQTTConfig defines the struct of the mqtt client configuration and configuration file
+type MQTTConfig struct {
+	Enabled    bool   `yaml:"-"`
+	Connection string `yaml:"connection"`
+	Retained   bool   `yaml:"retained"`
+}
+
+// NewConfig initializes and returns a new Config struct with default values.
+// It sets up the configuration with the default environment, log level, data collection intervals, and MQTT settings.
 func NewConfig() *Config {
 	return &Config{
 		Env:            DefaultEnv,
@@ -134,7 +141,15 @@ func NewConfig() *Config {
 	}
 }
 
+// LoadConfig loads a configuration file into the Config struct.
+// It reads the file, expands environment variables, and unmarshals the YAML content into the struct.
 func (c *Config) LoadConfig(fileName string) (*Config, error) {
+
+	fileName = filepath.ToSlash(fileName)
+
+	if fileInfo, err := os.Stat(fileName); err != nil || fileInfo.IsDir() {
+		return nil, fmt.Errorf("invalid or missing file %s", fileName)
+	}
 
 	content, err := os.ReadFile(fileName)
 	if err != nil {
