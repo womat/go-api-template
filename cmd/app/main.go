@@ -120,15 +120,15 @@ func printAbout() {
 
 	var p = ProgInfo{
 		Author:   "Wolfgang Mathe",
-		Binary:   "/opt/s0counter/bin/s0counter",
-		Comment:  "config .env file see /opt/s0counter/.env  and config file /opt/s0counter/etc/config.yaml",
+		Binary:   "/opt/<MODUL_NAME>/bin/<MODUL_NAME>",
+		Comment:  "config .env file see /opt/<MODUL_NAME>/.env  and config file /opt/<MODUL_NAME>/etc/config.yaml",
 		Date:     "2024-10-04",
-		Desc:     "s0counter reads impulses from an S0 interface compliant with DIN 43864 standards",
-		Help:     "/opt/s0counter/bin/s0counter --help",
+		Desc:     "Blueprint for Go applications",
+		Help:     "/opt/<MODUL_NAME>/bin/<MODUL_NAME> --help",
 		Libinfo:  "plain go with go modules from ITdesign golib",
-		Main:     "/opt/src/s0counter/cmd/app/main.go",
+		Main:     "/opt/src/<MODUL_NAME>/cmd/<MODUL_NAME>/main.go",
 		ProgLang: runtime.Version(),
-		Repo:     " https://github.com/womat/s0counter.git",
+		Repo:     " https://github.com/womat/<MODUL_NAME>.git",
 		Version:  app.VERSION,
 	}
 	b, _ := yaml.Marshal(p)
