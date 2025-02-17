@@ -32,19 +32,13 @@ func main() {
 	configFile := flags.String("config", app.DefaultConfigFile, "Specify the path to the config file")
 
 	if err := flags.Parse(os.Args[1:]); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "error: %s\n", err.Error())
+		fmt.Printf("error: %s\n", err.Error())
 		os.Exit(1)
-	}
-
-	// Print about details and exit when about flag is used.
-	if *about {
-		printAbout()
-		os.Exit(0)
 	}
 
 	switch {
 	case *about:
-		printAbout()
+		fmt.Println(About())
 		os.Exit(0)
 	case *cryptString != "":
 		fmt.Println(crypt.NewEncryptedString(*cryptString).EncryptedValue())
@@ -61,7 +55,7 @@ func main() {
 
 	config, err := loadConfig(*configFile, *logLevel, *logDestination)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Failed to load config file %s: %s\n", *configFile, err.Error())
+		fmt.Printf("Failed to load config file %s: %s\n", *configFile, err.Error())
 		os.Exit(1)
 	}
 
@@ -103,7 +97,7 @@ func main() {
 	}
 }
 
-func printAbout() {
+func About() string {
 	type ProgInfo struct {
 		Author   string `yaml:"author"`
 		Binary   string `yaml:"binary"`
@@ -132,7 +126,7 @@ func printAbout() {
 		Version:  app.VERSION,
 	}
 	b, _ := yaml.Marshal(p)
-	fmt.Print(string(b))
+	return string(b)
 }
 
 // loadConfig loads the configuration from the given file.
