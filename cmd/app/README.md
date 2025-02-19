@@ -5,7 +5,7 @@ Blueprint for Go applications
 ## 📌 Usage
 
 ```sh
-MODUL_NAME [-logLevel trace|debug|info|warning|error] [-LogDestination stdout|stderr|null|/path/to/logfile] [-version] [-about] [-help] [-crypt <text>]
+MODUL_NAME [-logLevel debug|info|warning|error] [-LogDestination stdout|stderr|null|/path/to/logfile] [-version] [-about] [-help]
 ```
 
 ### 🛠 Available Flags
@@ -13,12 +13,11 @@ MODUL_NAME [-logLevel trace|debug|info|warning|error] [-LogDestination stdout|st
 | **Flag**                   | **Description**                                                |
 |----------------------------|----------------------------------------------------------------|
 | `-version`                 | Prints the application version and exit                        |
-| `-about`                   | Prints details about `MODUL_NAME` and exit                  |
+| `-about`                   | Prints details about `MODUL_NAME` and exit                     |
 | `-help`                    | Prints this help message and exit                              |
-| `-logLevel <level>`        | Set the log level: trace, debug, info, warning ,error          |
+| `-logLevel <level>`        | Set the log level: debug, info, warning ,error                 |
 | `-logDestination <dest>`   | Set the log destination: stdout, stderr,null, /path/to/logfile |
 | `-config </path/file.cfg>` | Specify the path to the config file                            |
-| `-crypt <text>`            | Encrypt the given string and exit                              |
 
 ---
 
@@ -36,26 +35,13 @@ MODUL_NAME -version
 MODUL_NAME -about
 ```
 
-### Enable Debug Mode (Verbose Logging):
+### Enable Debug Logging (Source Code Location in Logs):
 
 ```sh
-`MODUL_NAME` -logLevel debug -logDestination stdout
+MODUL_NAME -logLevel debug -logDestination stdout
 ```
 
-### Enable Trace Logging (Source Code Location in Logs):
-
-```sh
-`MODUL_NAME` -logLevel trace -logDestination stdout
-```
-
-### Encrypt a String (`mysecret` in this example):
-
-```sh
-`MODUL_NAME` -crypt "mysecret"
-🔐 **Output:** Encrypted string (useful for securing credentials).
-```
-
-### Get monitoring data from a smart meter:
+### Get monitoring data:
 
 ```sh
 curl -k -H "X-Api-Key: 12345678" https://localhost:4000/api/monitoring
@@ -98,3 +84,14 @@ Want to contribute? Feel free to submit **pull requests** or report issues in th
 
 🔹 **Priority Rule:** `blockedIPs` **takes precedence** over `allowedIPs`.
 
+## generate a self-signed certificate for development**
+
+    openssl req -x509 -nodes -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.crt -days 35600 -subj "/C=AT/ST=Vienna/L=Vienna/O=ITDesign/OU=DEV/CN=localhost/emailAddress=support@itdesign.at"
+      -subj description
+       /C=AT								Country
+       /ST=Vienna							State (optional).
+       /L=Vienna							Location – City (optional).
+       /O=company							company (optional).
+       /OU=IT								Organizational Unit – (optional).
+       /CN=my-domain.com					Common Name – IMPORTANT! your domain name or localhost.
+       /emailAddress=admin@my-domain.com	E-Mail-Address (optional).

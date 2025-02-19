@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/womat/go-api-template/pkg/crypt"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
@@ -11,22 +10,6 @@ import (
 const (
 	ProdEnv = "prod"
 	DevEnv  = "dev"
-
-	DefaultEnv            = ProdEnv
-	DefaultListenHost     = ""
-	DefaultListenPort     = "443"
-	DefaultMinTLS         = "1.2"
-	DefaultLogLevel       = "info"
-	DefaultLogDestination = "stdout"
-	DefaultKeyFile        = "key.pem"
-	DefaultCertFile       = "cert.pem"
-	DefaultJwtSecret      = ""
-	DefaultJwtID          = ""
-)
-
-var (
-	AppDir            = filepath.Join("/opt", MODULE)
-	DefaultConfigFile = filepath.Join(AppDir, "etc/config.yaml")
 )
 
 // Config holds the application configuration
@@ -36,33 +19,19 @@ type Config struct {
 	//  Allowed values: prod | dev
 	//  It's used for:
 	//  - jwt token expiration (1 day in dev, 5 minutes in prod)
-	// Default is "prod".
 	Env string
 
 	// LogLevel is the log level, if set only message with at least this level is logged
 	//  e.g.: debug -> means error, warning, info and debug messages are logged
-	// Allowed values: debug | info | warning | error | trace
-	// Default is info.
+	// Allowed values: debug | info | warning | error
 	LogLevel string `yaml:"logLevel"`
 
 	// LogDestination defines the log destinations.
 	//  supported values: stdout | stderr | /path/to/logfile
 	LogDestination string `yaml:"logDestination"`
 
-	// ApiKey is the global api key for the application.
-	// ApiKey must be encrypted with "app --crypt <plaintext>"
-	// Default is empty that means api key authentication is disabled.
-	ApiKey crypt.EncryptedString `yaml:"apiKey"`
-
-	// JwtSecret is a secret key used to sign jwt tokens.
-	// JwtSecret must be encrypted with "app --crypt <plaintext>"
-	JwtSecret crypt.EncryptedString `yaml:"jwtSecret"`
-
-	// JwtID is a unique identifier for the jwt token used to prevent login with the same jwt token to another app.
-	JwtID string `yaml:"jwtID"`
-
-	// Webserver is the configuration of the webserver and webservice
-	Webserver WebserverConfig `yaml:"webserver"`
+	// HttpsServer is the configuration of the webserver and webservice
+	HttpsServer WebserverConfig `yaml:"webserver"`
 
 	// add your application-specific configuration here
 }
@@ -70,30 +39,26 @@ type Config struct {
 // WebserverConfig defines the struct of the webserver and webservice configuration and configuration file
 type WebserverConfig struct {
 	// ListenHost is the host address the https server listens for connections.
-	// Default is empty, which means all available network interfaces.
 	ListenHost string `yaml:"listenHost"`
 
 	// ListenPort is the port the https server listens for connections.
-	// Default is 443
 	ListenPort string `yaml:"listenPort"`
 
-	// MinTLS is the minimum TLS version the server accepts.
-	// Default is "1.2"
-	MinTLS string `yaml:"minTLS"`
+	// ApiKey is the global api key for the application.
+	ApiKey string `yaml:"apiKey"`
+
+	// JwtSecret is a secret key used to sign jwt tokens.
+	JwtSecret string `yaml:"jwtSecret"`
+
+	// JwtID is a unique identifier for the jwt token used to prevent login with the same jwt token to another app.
+	JwtID string `yaml:"jwtID"`
 
 	// KeyFile is the ssl certificate private key file
-	// Default is key.pem
 	KeyFile string `yaml:"keyFile"`
 
 	// CertFile is the ssl certificate public key file
-	// Default is cert.pem
 	// Pfx files are supported as well, in which case KeyFile must be empty and CertFile must point to the pfx file, CertPassword must contain the password to decode the pfx file.
 	CertFile string `yaml:"certFile"`
-
-	// CertPassword is an optional certificate password that
-	// CertPassword must be encrypted with "app --crypt <plaintext>"
-	// Default is empty, which means no password is used.
-	CertPassword crypt.EncryptedString `yaml:"certPassword"`
 
 	// BlockedIPs is a list of IP addresses or networks that are forbidden from accessing the application.
 	// Default is empty, which means no IP addresses or networks are blocked.
@@ -117,26 +82,12 @@ type MQTTConfig struct {
 	Retained   bool   `yaml:"retained"`
 }
 
-// NewConfig initializes and returns a new Config struct with default values.
-// It sets up the configuration with the default environment, log level, data collection intervals, and MQTT settings.
+// NewConfig initializes and returns a new Config struct.
 func NewConfig() *Config {
 	return &Config{
-		Env:            DefaultEnv,
-		LogLevel:       DefaultLogLevel,
-		LogDestination: DefaultLogDestination,
-
-		JwtSecret: *crypt.NewEncryptedString(DefaultJwtSecret),
-		JwtID:     DefaultJwtID,
-
-		Webserver: WebserverConfig{
-			ListenHost:   DefaultListenHost,
-			ListenPort:   DefaultListenPort,
-			MinTLS:       DefaultMinTLS,
-			CertFile:     filepath.Join(AppDir, "etc", DefaultCertFile),
-			KeyFile:      filepath.Join(AppDir, "etc", DefaultKeyFile),
-			CertPassword: *crypt.NewEncryptedString(""),
-			BlockedIPs:   []string{},
-			AllowedIPs:   []string{},
+		HttpsServer: WebserverConfig{
+			BlockedIPs: []string{},
+			AllowedIPs: []string{},
 		},
 	}
 }

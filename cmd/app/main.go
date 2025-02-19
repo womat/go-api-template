@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/womat/go-api-template/app"
-	"github.com/womat/go-api-template/pkg/crypt"
 	"github.com/womat/go-api-template/pkg/xlog"
 	"gopkg.in/yaml.v3"
 	"log/slog"
@@ -23,13 +22,12 @@ func main() {
 	flags.SetOutput(os.Stdout)
 
 	about := flags.Bool("about", false, "Print app details and exit")
-	cryptString := flags.String("crypt", "", "Encrypt the given string and exit")
 	help := flags.Bool("help", false, "Print a help message and exit")
 	version := flags.Bool("version", false, "Print the app version and exit")
 
-	logLevel := flags.String("logLevel", "", "Set the log level (overrides the config file). Supported values: trace | debug | info | warning | error")
+	logLevel := flags.String("logLevel", "", "Set the log level (overrides the config file). Supported values: debug | info | warning | error")
 	logDestination := flags.String("logDestination", "", "Set the log destination (overrides the config file). Supported values: stdout | stderr | null | /path/to/logfile")
-	configFile := flags.String("config", app.DefaultConfigFile, "Specify the path to the config file")
+	configFile := flags.String("config", filepath.Join("/opt", app.MODULE, "etc/config.yaml"), "Specify the path to the config file")
 
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		fmt.Printf("error: %s\n", err.Error())
@@ -39,9 +37,6 @@ func main() {
 	switch {
 	case *about:
 		fmt.Println(About())
-		os.Exit(0)
-	case *cryptString != "":
-		fmt.Println(crypt.NewEncryptedString(*cryptString).EncryptedValue())
 		os.Exit(0)
 	case *version:
 		fmt.Println(app.VERSION)
@@ -139,7 +134,7 @@ func loadConfig(configFile, logLevel, logDestination string) (*app.Config, error
 
 	switch logLevel {
 	case "": // if no log level is provided, use the one from the config
-	case "debug", "trace", "info", "warning", "error", "err", "warn":
+	case "debug", "info", "warning", "error":
 		config.LogLevel = logLevel
 	default:
 		return nil, fmt.Errorf("invalid log level: %s", logLevel)

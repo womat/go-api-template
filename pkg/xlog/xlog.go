@@ -15,7 +15,6 @@ type LoggerWrapper struct {
 
 // Init initializes the slog logger with the given log destinations and log level.
 // dest: stdout, stderr, /path/to/logfile
-// logLevel: (default: audit)
 // addSource: add go source file name and line number to log output
 func Init(dest string, logLevel string) (*LoggerWrapper, error) {
 
@@ -27,7 +26,7 @@ func Init(dest string, logLevel string) (*LoggerWrapper, error) {
 	logLevel = strings.ToLower(logLevel)
 
 	switch dest {
-	case "stdout", "":
+	case "stdout":
 		writer = os.Stdout
 	case "stderr":
 		writer = os.Stderr
@@ -43,16 +42,16 @@ func Init(dest string, logLevel string) (*LoggerWrapper, error) {
 	level := slog.LevelInfo
 
 	switch logLevel {
-	case "trace", "debug":
+	case "debug":
 		level = slog.LevelDebug
-	case "err", "error":
+	case "error":
 		level = slog.LevelError
-	case "warn", "warning":
+	case "warning":
 		level = slog.LevelWarn
 	}
 
 	logger := slog.New(slog.NewTextHandler(writer, &slog.HandlerOptions{
-		AddSource: logLevel == "trace",
+		AddSource: logLevel == "debug",
 		Level:     level}))
 	return &LoggerWrapper{Logger: logger, File: logFile}, nil
 }
