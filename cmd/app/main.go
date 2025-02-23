@@ -93,32 +93,18 @@ func main() {
 }
 
 func About() string {
-	type ProgInfo struct {
-		Author   string `yaml:"author"`
-		Binary   string `yaml:"binary"`
-		Comment  string `yaml:"comment"`
-		Date     string `yaml:"date"`
-		Desc     string `yaml:"desc"`
-		Help     string `yaml:"help"`
-		Libinfo  string `yaml:"libinfo"`
-		Main     string `yaml:"main"`
-		ProgLang string `yaml:"progLang"`
-		Repo     string `yaml:"repo"`
-		Version  string `yaml:"version"`
-	}
-
-	var p = ProgInfo{
-		Author:   "Wolfgang Mathe",
-		Binary:   "/opt/<MODUL_NAME>/bin/<MODUL_NAME>",
-		Comment:  "config .env file see /opt/<MODUL_NAME>/.env  and config file /opt/<MODUL_NAME>/etc/config.yaml",
-		Date:     "2024-10-04",
-		Desc:     "Blueprint for Go applications",
-		Help:     "/opt/<MODUL_NAME>/bin/<MODUL_NAME> --help",
-		Libinfo:  "plain go with go modules from ITdesign golib",
-		Main:     "/opt/src/<MODUL_NAME>/cmd/<MODUL_NAME>/main.go",
-		ProgLang: runtime.Version(),
-		Repo:     " https://github.com/womat/<MODUL_NAME>.git",
-		Version:  app.VERSION,
+	p := map[string]string{
+		"Author":   "Wolfgang Mathe",
+		"Binary":   "/opt/<MODUL_NAME>/bin/<MODUL_NAME>",
+		"Comment":  "config .env file see /opt/<MODUL_NAME>/.env  and config file /opt/<MODUL_NAME>/etc/config.yaml",
+		"Date":     "2024-10-04",
+		"Desc":     "Blueprint for Go applications",
+		"Help":     "/opt/<MODUL_NAME>/bin/<MODUL_NAME> -help",
+		"Libinfo":  "plain go with go modules from ITdesign golib",
+		"Main":     "/opt/src/<MODUL_NAME>/cmd/<MODUL_NAME>/main.go",
+		"ProgLang": runtime.Version(),
+		"Repo":     " https://github.com/womat/<MODUL_NAME>.git",
+		"Version":  app.VERSION,
 	}
 	b, _ := yaml.Marshal(p)
 	return string(b)
