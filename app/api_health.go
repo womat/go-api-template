@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/womat/go-api-template/app/service/health"
-	"github.com/womat/go-api-template/pkg/web"
+	"github.com/womat/golib/web"
 	"log/slog"
 	"net/http"
 )

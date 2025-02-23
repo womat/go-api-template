@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/womat/go-api-template/app"
-	"github.com/womat/go-api-template/pkg/xlog"
+	"github.com/womat/golib/xlog"
 	"gopkg.in/yaml.v3"
 	"log/slog"
 	"os"

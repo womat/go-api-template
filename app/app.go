@@ -117,7 +117,7 @@ func (app *App) HandleOSSignals() {
 		slog.Info("Starting signal handler")
 
 		receivedSignal := <-sig
-		slog.Warn("Received OS signal", "signal", receivedSignal)
+		slog.Info("Received OS signal", "signal", receivedSignal)
 
 		switch receivedSignal {
 		case syscall.SIGHUP:

@@ -2,7 +2,7 @@ package app
 
 import (
 	httpSwagger "github.com/swaggo/http-swagger"
-	"github.com/womat/go-api-template/pkg/web"
+	"github.com/womat/golib/web"
 	"net/http"
 )
 
