@@ -31,9 +31,6 @@ const (
 // App is where the application is wired up.
 type App struct {
 
-	// baseDir is the application working directory
-	baseDir string
-
 	// config is the application configuration
 	config *Config
 
@@ -48,12 +45,11 @@ type App struct {
 }
 
 // New checks the Web server URL and initializes the main app structure
-func New(config *Config, baseDir string) *App {
+func New(config *Config) *App {
 
 	return &App{
-		baseDir: baseDir,
-		config:  config,
-		web:     &http.Server{},
+		config: config,
+		web:    &http.Server{},
 
 		restart:  make(chan struct{}),
 		shutdown: make(chan struct{}),

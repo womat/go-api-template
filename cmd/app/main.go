@@ -24,10 +24,8 @@ func main() {
 	about := flags.Bool("about", false, "Print app details and exit")
 	help := flags.Bool("help", false, "Print a help message and exit")
 	version := flags.Bool("version", false, "Print the app version and exit")
-
-	logLevel := flags.String("logLevel", "", "Set the log level (overrides the config file). Supported values: debug | info | warning | error")
-	logDestination := flags.String("logDestination", "", "Set the log destination (overrides the config file). Supported values: stdout | stderr | null | /path/to/logfile")
-	configFile := flags.String("config", filepath.Join("/opt", app.MODULE, "etc/config.yaml"), "Specify the path to the config file")
+	debug := flags.Bool("debug", false, "Enable debug logging to stdout (overrides log settings from the config file)")
+	configFile := flags.String("config", filepath.Join("/opt", app.MODULE, "etc", "config.yaml"), "Specify the path to the config file")
 
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		fmt.Printf("error: %s\n", err.Error())
@@ -48,7 +46,7 @@ func main() {
 
 	var logger *xlog.LoggerWrapper
 
-	config, err := loadConfig(*configFile, *logLevel, *logDestination)
+	config, err := loadConfig(*configFile, *debug)
 	if err != nil {
 		fmt.Printf("Failed to load config file %s: %s\n", *configFile, err.Error())
 		os.Exit(1)
@@ -69,7 +67,7 @@ func main() {
 			slog.Info("Logging initialized", "logLevel", config.LogLevel)
 			slog.Debug("Starting with configuration", "config", config)
 
-			a, err := app.New(config, filepath.Join("/opt", app.MODULE)).Run()
+			a, err := app.New(config).Run()
 			if err != nil {
 				slog.Error("Critical error occurred, shutting down", "error", err)
 				os.Exit(1)
@@ -78,7 +76,7 @@ func main() {
 			select {
 			case <-a.Restart():
 				slog.Info("Reload configuration", "configFile", *configFile)
-				if config, err = loadConfig(*configFile, *logLevel, *logDestination); err != nil {
+				if config, err = loadConfig(*configFile, *debug); err != nil {
 					slog.Error("Failed to reload config file, shutting down",
 						"configFile", *configFile,
 						"error", err)
@@ -95,15 +93,14 @@ func main() {
 func About() string {
 	p := map[string]string{
 		"Author":   "Wolfgang Mathe",
-		"Binary":   "/opt/<MODUL_NAME>/bin/<MODUL_NAME>",
-		"Comment":  "config .env file see /opt/<MODUL_NAME>/.env  and config file /opt/<MODUL_NAME>/etc/config.yaml",
-		"Date":     "2024-10-04",
+		"Binary":   filepath.Join("/opt", app.MODULE, "bin", app.MODULE),
+		"Date":     "2025-02-24",
 		"Desc":     "Blueprint for Go applications",
-		"Help":     "/opt/<MODUL_NAME>/bin/<MODUL_NAME> -help",
+		"Help":     filepath.Join("/opt", app.MODULE, "bin", app.MODULE) + " --help",
 		"Libinfo":  "plain go with go modules from ITdesign golib",
-		"Main":     "/opt/src/<MODUL_NAME>/cmd/<MODUL_NAME>/main.go",
+		"Main":     filepath.Join("/opt/src", app.MODULE, "cmd", app.MODULE, "main.go"),
 		"ProgLang": runtime.Version(),
-		"Repo":     " https://github.com/womat/<MODUL_NAME>.git",
+		"Repo":     "https://github.com/womat/" + app.MODULE + ".git",
 		"Version":  app.VERSION,
 	}
 	b, _ := yaml.Marshal(p)
@@ -111,24 +108,16 @@ func About() string {
 }
 
 // loadConfig loads the configuration from the given file.
-func loadConfig(configFile, logLevel, logDestination string) (*app.Config, error) {
+func loadConfig(configFile string, debug bool) (*app.Config, error) {
 
 	config, err := app.NewConfig().LoadConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
 
-	switch logLevel {
-	case "": // if no log level is provided, use the one from the config
-	case "debug", "info", "warning", "error":
-		config.LogLevel = logLevel
-	default:
-		return nil, fmt.Errorf("invalid log level: %s", logLevel)
-	}
-
-	// Set log destination if provided
-	if logDestination != "" {
-		config.LogDestination = logDestination
+	if debug {
+		config.LogLevel = "debug"
+		config.LogDestination = "stdout"
 	}
 
 	return config, nil
